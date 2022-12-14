@@ -61,10 +61,10 @@ custom:
         title: Zolateklu TODOs API
         description: Serverless application for managing TODOs
     models:
-      - name: CreateTodoModel
+      - name: CreateTodoRequest
         contentType: application/json
         schema: ${file(models/create-todo-model.json)}
-      - name: UpdateTodoModel
+      - name: UpdateTodoRequest
         contentType: application/json
         schema: ${file(models/update-todo-model.json)}
 
@@ -116,7 +116,7 @@ functions:
             summary: Create a new todo task
             description: Create a todo task
             requestModels:
-              'application/json': CreateTodoModel
+              'application/json': CreateTodoRequest
 
     iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-create-todo-role-${self:provider.stage}
     iamRoleStatements:
@@ -146,7 +146,7 @@ functions:
             summary: Update a new todo task
             description: Update a todo task
             requestModels:
-              'application/json': UpdateTodoModel
+              'application/json': UpdateTodoRequest
     iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-update-todo-role-${self:provider.stage}
     iamRoleStatements:
       - Effect: Allow
@@ -198,12 +198,12 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - s3:PutObject
-          - s3:GetObject
+          - s3:*
         Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*
       - Effect: Allow
         Action:
-          - dynamodb:updateItem
+          - dynamodb:Query
+          - dynamodb:PutItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}    
       - Effect: Allow
         Action:
