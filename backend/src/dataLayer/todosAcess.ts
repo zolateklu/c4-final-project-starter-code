@@ -23,104 +23,115 @@ export class TodosAccess {
     async getAllTodos(userId: string): Promise<TodoItem[]> {
         logger.info('Get all todos function called')
 
-        const result = await this.docClient
-        .query({
+        const params = {
             TableName: this.todosTable,
             IndexName: this.todosIndex,
-            KeyConditionExpression: 'userId = :userId',
+            KeyConditionExpression: '#userId = :userId',
+            ExpressionAttributeNames: {
+                '#userId': 'userId'
+            },
             ExpressionAttributeValues: {
                 ':userId': userId
             }
-        })
-        .promise()
+        }
+
+        const result = await this.docClient.query(params).promise()
 
         const items = result.Items
         return items as TodoItem[]
     }
 
+
+    async getTodoItem(todoId: string, userId: string): Promise<TodoItem> {
+        logger.info(`function getTodoItem called`)
+    
+        const params = {
+            TableName: this.todosTable,
+            Key: {
+              todoId,
+              userId
+            }
+        }
+
+        const result = await this.docClient.get(params).promise()
+        const item = result.Item
+    
+        return item as TodoItem
+    }
+
+
     async createTodoItem(todoItem: TodoItem): Promise<TodoItem> {
         logger.info('Called Create Todo Item function')
 
-        const result = await this.docClient
-        .put({
+        const params = {
             TableName: this.todosTable,
             Item: todoItem
-        })
-        .promise()
-        logger.info('Todo item created', result)
+        }
+
+        const result = await this.docClient.put(params).promise()
+
+        logger.info('todo item created', result)
 
         return todoItem as TodoItem
     }
 
-    async updateTodoItem(
-        todoId: string,
-        userId: string,
-        todoUpdate: TodoUpdate
-    ): Promise<TodoUpdate> {
+    async updateTodoItem(todoId: string, userId: string, todoUpdate: TodoUpdate): Promise<TodoUpdate>{
         logger.info('Update todo item function called')
 
-        const result = await this.docClient
-        .update({
+        const params = {
             TableName: this.todosTable,
-            Key: {
+            Key:{
                 todoId,
                 userId
             },
             UpdateExpression: 'set #name = :name, dueDate = :dueDate, done = :done',
             ExpressionAttributeValues: {
-                ':done' : todoUpdate.done,
-                ':dueDate' : todoUpdate.dueDate,
-                ':name' : todoUpdate.name
+                ':name': todoUpdate.name,
+                ':dueDate': todoUpdate.dueDate,
+                ':done': todoUpdate.done
             },
             ExpressionAttributeNames: {
-                '#name' : 'name'
+                '#name': 'name'
             },
             ReturnValues: 'ALL_NEW'
-        })
-        .promise()
+        }
 
-        const todoItemUpdate = result.Attributes
-        logger.info('Todo item updated', todoItemUpdate)
-        return todoItemUpdate as TodoUpdate
-        
+        const result = await this.docClient.update(params).promise()
+        logger.info('Todo item updated', result)
+
+        const attributes = result.Attributes;
+        return attributes as TodoUpdate
     }
 
+    async deleteTodoItem(todoId: string, userId: string){
+        logger.info('function delete todo item called!')
 
-    async deleteTodoItem(todoId: string, userId: string): Promise<string> {
-        logger.info('Delete todo item function called')
-
-       const result = await this.docClient
-        .delete({
-           TableName: this.todosTable,
-           Key: {
-            todoId,
-            userId
-           } 
-        })
-        .promise()
-        logger.info('Todo item deleted', result)
-        return todoId as string
-    }
-
-    async updateTodoAttachmentUrl(
-        todoId: string,
-        userId: string,
-        attachmentUrl: string
-    ): Promise<void> {
-        logger.info('Update todo attachment url function called')
-
-        await this.docClient
-        .update({
+        const params = {
             TableName: this.todosTable,
             Key: {
                 todoId,
                 userId
+            }
+        }
+
+        await this.docClient.delete(params).promise()
+    }
+
+    async updateAttachmentUrl(todoId: string, userId: string, attachmentUrl: string) {
+        logger.info(`Updating attachment URL!`)
+        
+        const params = {
+            TableName: this.todosTable,
+            Key: {
+              todoId,
+              userId
             },
             UpdateExpression: 'set attachmentUrl = :attachmentUrl',
             ExpressionAttributeValues: {
-                ':attachmentUrl': attachmentUrl
+              ':attachmentUrl': attachmentUrl
             }
-        })
-        .promise()
-    }
+        }
+
+        await this.docClient.update(params).promise()
+      }
 }

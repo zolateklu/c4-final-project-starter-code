@@ -152,6 +152,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
+          - dynamodb:GetItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
       - Effect: Allow
         Action:
@@ -198,12 +199,14 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - s3:*
+          - s3:PutObject
+          - xray:PutTraceSegments
         Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*
       - Effect: Allow
         Action:
           - dynamodb:Query
-          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+          - dynamodb:GetItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}    
       - Effect: Allow
         Action:
@@ -297,7 +300,7 @@ resources:
                 - '*'
               AllowedHeaders:
                 - '*'
-              MaxAge: 300
+              MaxAge: 3000
 
     # DONE: Complete the policy below and attach it to the bucket defined above
     # For cross referencing the name of the bucket, use "!Ref AttachmentsBucket"
